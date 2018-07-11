@@ -27,6 +27,8 @@ export class AppComponent {
   posts: any;
   singlePost: Observable<Post>;
 
+  onlyEric: AngularFirestoreCollection<Post>;
+
   constructor(private afs: AngularFirestore) {}
 
   // POST input from forms, 2 way data binding bby
@@ -38,7 +40,8 @@ export class AppComponent {
     this.afs.collection('posts').add({'title': this.title, 'content': this.content})
 
     // Using .doc() and .set() lets you set your own custom id
-    this.afs.collection('posts').doc('customidwow').set({'title': this.title, 'content': this.content})
+    /*this.afs.collection('posts').doc('customidwow')
+      .set({'title': this.title, 'content': this.content})*/
   }
 
   getPost(postId) {
@@ -50,8 +53,37 @@ export class AppComponent {
     this.afs.doc('posts/'+postId).delete();
   }
 
+  ericOnly() {
+    this.posts = this.onlyEric.snapshotChanges()
+      .pipe(map(actions => {
+        return actions.map(a => {
+          const data = a.payload.doc.data() as Post;
+          const id = a.payload.doc.id;
+          return { id, data };
+        });
+      }));
+  }
+
+  clearFilter() {
+    this.posts = this.postsCol.snapshotChanges()
+      .pipe(map(actions => {
+        return actions.map(a => {
+          const data = a.payload.doc.data() as Post;
+          const id = a.payload.doc.id;
+          return { id, data };
+        });
+      }));
+  }
+
   ngOnInit() {
+
+
+
     this.postsCol = this.afs.collection('posts');
+
+    this.onlyEric = this.afs.collection('posts', ref =>
+    ref.where('title', '>=', 'Eric').where('title', '<', 'erid'));
+
     this.posts = this.postsCol.snapshotChanges()
       .pipe(map(actions => {
         return actions.map(a => {
